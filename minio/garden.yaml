@@ -1,0 +1,31 @@
+kind: Deploy
+type: helm
+name: minio
+spec:
+  chart:
+    name: minio
+    repo: https://charts.bitnami.com/bitnami
+    version: "12.8.17"
+  values:    
+    auth:
+      existingSecret: minio-secrets
+    extraEnvVars:
+    - name: MINIO_BROWSER_REDIRECT_URL
+      value: "${environment.name == 'local' ? 'http://' : 'https://'}minio.${var.hostname}/ui/"
+    - name: MINIO_LOG_LEVEL
+      value: DEBUG
+    provisioning:
+      enabled: true
+      extraCommands:
+      - "mc mb provisioning/warehouse"
+      - mc anonymous set private provisioning/warehouse
+    resources:
+      limits:
+        cpu: 4
+        memory: 8Gi
+      requests:
+        cpu: 2
+        memory: 4Gi
+    persistence:
+      size: ${var.minio_volume_size}
+      

@@ -1,0 +1,33 @@
+apiVersion: garden.io/v1
+kind: Project
+name: teehr-spark
+defaultEnvironment: local
+environments:
+  - name: local
+    variables:
+      hostname: ${project.name}.local.app.garden
+      minio_volume_size: 8Gi
+  # - name: remote
+  #   variables:
+  #     hostname: yuba-rtim.rtiamanzi.org
+  #     model_runner_deployment_name: run-sim-map/remote-run-simulation
+  #     minio_volume_size: 100Gi
+providers:
+  # The name of the provider plugin to use.
+  - name: local-kubernetes
+    environments: ["local"]
+    setupIngressController: false
+    deploymentRegistry:
+      hostname: localhost:5001
+      namespace: ${project.name}
+  # - name: kubernetes
+  #   environments: ["remote"]
+  #   imagePullSecrets:
+  #     - name: yuba-regcred
+  #       namespace: default
+  #   deploymentRegistry:
+  #     hostname: yubaacr.azurecr.io
+  #     namespace: ${project.name}
+  #   context: yuba-rtim-aks
+  #   buildMode: cluster-buildkit
+  #   defaultHostname: yuba-rtim.rtiamanzi.org
