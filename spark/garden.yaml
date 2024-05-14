@@ -1,9 +1,0 @@
-kind: Deploy
-type: helm
-name: spark
-spec:
-  chart:
-    name: spark
-    repo: https://charts.bitnami.com/bitnami
-    version: "9.0.1"
-  

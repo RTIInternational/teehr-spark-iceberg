@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: spark-iceberg
+  name: spark-iceberg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-iceberg
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: spark-iceberg
+    spec:
+      # imagePullSecrets:
+      # - name: yuba-regcred
+      containers:
+      - image: ${actions.build.spark-iceberg-image.outputs.deployment-image-id}
+        imagePullPolicy: IfNotPresent
+        name: spark-iceberg
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrets
+              key: root-user
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrets
+              key: root-password
+        - name: AWS_REGION
+          value: us-east-1
+        ports:
+        - name: http
+          containerPort: 8888
+          protocol: TCP
+        - name: http1
+          containerPort: 8080
+          protocol: TCP
+        - name: http2
+          containerPort: 10000
+          protocol: TCP
+        - name: http3
+          containerPort: 10001
+          protocol: TCP
+        - name: http4
+          containerPort: 7077
+          protocol: TCP
+        # livenessProbe:
+        #   httpGet:
+        #     path: /healthz
+        #     port: http
+        # readinessProbe:
+        #   httpGet:
+        #     path: /healthz
+        #     port: http
+        resources: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: spark-iceberg
+  name: spark-iceberg
+spec:
+  ports:
+  - protocol: TCP
+    port: 8888
+    targetPort: 8888
+  selector:
+    app: spark-iceberg
+  type: ClusterIP

@@ -1,0 +1,14 @@
+# kind: Build
+# type: container
+# name: spark-iceberg-image
+# description: spark-iceberg-image
+# spec:
+#   dockerfile: "Dockerfile.bitnami"
+# ---
+# kind: Deploy
+# type: kubernetes
+# name: spark-iceberg
+# description: K8s spark-iceberg deployment
+# spec:
+#   files: ["./manifests/spark-iceberg.yaml"]
+# dependencies: ["build.spark-iceberg-image", "deploy.iceberg-rest"]

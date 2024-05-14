@@ -1,0 +1,21 @@
+kind: Build
+type: container
+name: spark-iceberg-image
+description: spark-iceberg-image
+spec:
+  dockerfile: "Dockerfile.iceberg"
+---
+kind: Build
+type: container
+name: spark-jupyter-image
+description: spark-jupyter-image
+spec:
+  dockerfile: "Dockerfile.jupyter"
+---
+kind: Deploy
+type: kubernetes
+name: spark-jupyter
+description: K8s spark-jupyter deployment
+spec:
+  files: ["./manifests/spark-jupyter.yaml"]
+dependencies: ["build.spark-iceberg-image", "build.spark-jupyter-image", "deploy.iceberg-rest"]

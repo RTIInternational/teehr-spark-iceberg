@@ -1,0 +1,72 @@
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: ${project.name}-proxy
+spec:
+  virtualhost:
+    fqdn: ${var.hostname}
+    ${if environment.name != "local"}
+    tls:
+      secretName: ${var.hostname}-tls
+    ${endif}
+  routes:
+    - services:
+      - name: spark-iceberg
+        port: 8888
+      conditions:
+        - prefix: /
+    - services:
+      - name: iceberg-rest
+        port: 8181
+      conditions:
+      - prefix: /iceberg
+      pathRewritePolicy:
+        replacePrefix:
+        - prefix: /iceberg
+          replacement: /
+
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: ${project.name}-minio-proxy
+spec:
+  virtualhost:
+    fqdn: minio.${var.hostname}
+    ${if environment.name != "local"}
+    tls:
+      secretName: minio.${var.hostname}-tls
+    ${endif}
+  routes:
+    - services:
+      - name: minio
+        port: 9000
+      conditions:
+      - prefix: /
+    - services:
+      - name: minio
+        port: 9001
+      conditions:
+      - prefix: /ui
+      enableWebsockets: true
+      pathRewritePolicy:
+        replacePrefix:
+        - prefix: /ui
+          replacement: /
+
+# ${if environment.name == "local"}
+# ---
+# apiVersion: projectcontour.io/v1
+# kind: HTTPProxy
+# metadata:
+#   name: ${project.name}-prefect-proxy
+# spec:
+#   virtualhost:
+#     fqdn: prefect.${var.hostname}
+#   routes:
+#     - services:
+#       - name: prefect-server
+#         port: 4200
+#       conditions:
+#       - prefix: /
+# ${endif}

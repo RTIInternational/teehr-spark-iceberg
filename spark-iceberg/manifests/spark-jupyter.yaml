@@ -1,0 +1,216 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jupyter
+  labels:
+    release: jupyter
+  # namespace: ${env.namespace}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: jupyter
+  labels:
+    release: jupyter
+  # namespace: ${env.namespace}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - get
+  - delete
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - create
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - pods/exec
+  verbs:
+  - create
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - create
+  - list
+  - watch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jupyter
+  labels:
+    release: jupyter
+  # namespace: ${env.namespace}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: jupyter
+subjects:
+- kind: ServiceAccount
+  name: jupyter
+  # namespace: ${env.namespace}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: jupyter
+  # namespace: ${env.namespace}
+subjects:
+- kind: ServiceAccount
+  name: jupyter
+  namespace: teehr-spark-default
+roleRef:
+  kind: ClusterRole
+  name: edit
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jupyter
+  labels:
+    release: jupyter
+  # namespace: ${env.namespace}
+spec:
+  type: ClusterIP
+  selector:
+    release: jupyter
+  ports:
+  - name: http
+    port: 8888
+    protocol: TCP
+  - name: blockmanager
+    port: 7777
+    protocol: TCP
+  - name: driver
+    port: 2222
+    protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jupyter-headless
+  labels:
+    release: jupyter
+  # namespace: ${env.namespace}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: false
+  selector:
+    release: jupyter
+  ports:
+  - name: http
+    port: 8888
+    protocol: TCP
+  - name: blockmanager
+    port: 7777
+    protocol: TCP
+  - name: driver
+    port: 2222
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: jupyter
+  labels:
+    release: jupyter
+  # namespace: ${env.namespace}
+spec:
+  replicas:
+  updateStrategy:
+    type: RollingUpdate
+  serviceName: jupyter-headless
+  podManagementPolicy: Parallel
+  # volumeClaimTemplates:
+  # - metadata:
+  #     name: notebook-data
+  #     labels:
+  #       release: jupyter
+  #   spec:
+  #     accessModes:
+  #     - ReadWriteOnce
+  #     volumeMode: Filesystem
+  #     resources:
+  #       requests:
+  #         storage: 100Mi
+  #     storageClassName: hostpath
+  selector:
+    matchLabels:
+      release: jupyter
+  template:
+    metadata:
+      labels:
+        release: jupyter
+      annotations:
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: jupyter
+      dnsConfig:
+        options:
+        - name: ndots
+          value: "1"
+      containers:
+      - name: jupyter
+        image: ${actions.build.spark-jupyter-image.outputs.deployment-image-id}
+        imagePullPolicy: Always
+        env:
+        - name: TEEHR_WORKER_IMAGE
+          value: ${actions.build.spark-iceberg-image.outputs.deployment-image-id}
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrets
+              key: root-user
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrets
+              key: root-password
+        - name: AWS_REGION
+          value: us-east-1
+        ports:
+        - name: http
+          containerPort: 8888
+          protocol: TCP
+        - name: blockmanager
+          containerPort: 7777
+          protocol: TCP
+        - name: driver
+          containerPort: 2222
+          protocol: TCP
+        # volumeMounts:
+        # - name: notebook-data
+        #   mountPath: /home/notebook
+        resources:
+          limits:
+            cpu: 12
+            memory: 96Gi
+          requests:
+            cpu: 8
+            memory: 64Gi

@@ -1,0 +1,12 @@
+kind: Deploy
+type: helm
+name: spark-operator
+spec:
+  chart:
+    name: spark-operator
+    repo: https://kubeflow.github.io/spark-operator
+    version: "1.2.14"
+  values:
+    webhook:
+      enabled: true
+disabled: true

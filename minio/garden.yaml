@@ -18,7 +18,7 @@ spec:
       enabled: true
       extraCommands:
       - "mc mb provisioning/warehouse"
-      - mc anonymous set private provisioning/warehouse
+      - "mc policy set public provisioning/warehouse"
     resources:
       limits:
         cpu: 4
@@ -28,4 +28,5 @@ spec:
         memory: 4Gi
     persistence:
       size: ${var.minio_volume_size}
+
       

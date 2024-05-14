@@ -1,0 +1,52 @@
+FROM docker.io/bitnami/spark:3.5
+
+USER root
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      curl \
+      vim \
+      unzip && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Jupyter and other python deps
+COPY requirements.txt .
+RUN pip3 install -r requirements.txt
+
+ENV SPARK_VERSION=3.5.1
+ENV SPARK_MAJOR_VERSION=3.5
+ENV ICEBERG_VERSION=1.5.0
+
+# Download iceberg spark runtime
+RUN curl https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${SPARK_MAJOR_VERSION}_2.12/${ICEBERG_VERSION}/iceberg-spark-runtime-${SPARK_MAJOR_VERSION}_2.12-${ICEBERG_VERSION}.jar -Lo ${SPARK_HOME}/jars/iceberg-spark-runtime-${SPARK_MAJOR_VERSION}_2.12-${ICEBERG_VERSION}.jar
+
+# Download AWS bundle
+RUN curl -s https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-aws-bundle/${ICEBERG_VERSION}/iceberg-aws-bundle-${ICEBERG_VERSION}.jar -Lo ${SPARK_HOME}/jars/iceberg-aws-bundle-${ICEBERG_VERSION}.jar
+
+# Install AWS CLI
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+ && unzip awscliv2.zip \
+ && ./aws/install \
+ && rm awscliv2.zip \
+ && rm -rf aws/
+
+RUN mkdir -p /home/iceberg/localwarehouse /home/iceberg/notebooks /home/iceberg/warehouse /home/iceberg/spark-events /home/iceberg
+
+# Add a notebook command
+RUN echo '#! /bin/sh' >> /opt/bitnami/spark/notebook.sh \
+ && echo 'export PYSPARK_DRIVER_PYTHON=jupyter-notebook' >> /opt/bitnami/spark/notebook.sh  \
+ && echo "export PYSPARK_DRIVER_PYTHON_OPTS=\"--notebook-dir=/home/iceberg/notebooks --ip='*' --NotebookApp.token='' --NotebookApp.password='' --port=8888 --no-browser --allow-root\"" >> /opt/bitnami/spark/notebook.sh \
+ && echo "pyspark" >> /opt/bitnami/spark/notebook.sh \
+ && chmod u+x /opt/bitnami/spark/notebook.sh
+
+COPY spark-defaults.conf /opt/bitnami/spark/conf
+
+COPY .pyiceberg.yaml /root/.pyiceberg.yaml
+
+USER 1001
+
+# CMD ["/opt/bitnami/spark/notebook.sh"]
+CMD jupyter-notebook --port=8888 --ip='*' --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''
+
+
