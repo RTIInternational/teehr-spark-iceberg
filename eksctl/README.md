@@ -14,7 +14,7 @@ kubectl --namespace default create secret generic ecr-config \
 cd ..
 ```
 
-## Install contour ingress controller
+## Install contour ingress controller (only needed if exposing to internet)
 ```bash
 helm install \
   contour \
@@ -31,10 +31,10 @@ kubectl describe svc contour-envoy --namespace contour | grep Ingress | awk '{pr
 
 Make sure DNS changes have propagated and then move to `cert-manger`.
 ```bash
-nslookup teehr-spark.rtiamanzi.org
+nslookup minio.teehr-spark.rtiamanzi.org
 ```
 
-## Get SSL Certificate and configure HTTPProxy
+## Get SSL Certificate and configure HTTPProxy (only needed if exposing to internet)
 ```bash
 helm install \
   cert-manager jetstack/cert-manager \
@@ -42,6 +42,10 @@ helm install \
   --create-namespace \
   --version v1.12.0 \
   --set installCRDs=true
+
+helm uninstall \
+  cert-manager \
+  --namespace cert-manager
 ```
 
 ## Autoscaler
@@ -54,18 +58,14 @@ helm upgrade \
   --set awsRegion=us-east-2
 ```
 
-```
-kubectl apply -f autoscaler/cluster-autoscaler-autodiscover.yaml
-```
-```
-kubectl delete -f autoscaler/cluster-autoscaler-autodiscover.yaml
-```
 
 Need to create container repositories for each container (service), for example, `teehr-spark/spark-iceberg-image`.
 Only needs to be done once.
 
 Still have an issue with docker permissions for the service account.  
 `ecr-poweruser` does not seem to work, so setting manually in AWS console for now.
+
+Autoscaler policy needs to be added too...not sure why can't make this work.
 
 ```
 garden deploy --env remote
@@ -80,6 +80,7 @@ kubectl config use-context mdenno@teehr-spark-cluster.us-east-2.eksctl.io
 kubectl -n teehr-spark-default port-forward service/spark-iceberg 8888
 kubectl -n teehr-spark-default port-forward pod/spark-master-0 8080
 kubectl -n teehr-spark-default port-forward service/jupyter 8888
+kubectl -n teehr-spark-default port-forward service/minio 9001
 ```
 
 eksctl delete cluster --name teehr-spark-cluster --force --disable-nodegroup-eviction
@@ -112,4 +113,11 @@ eksctl create addon \
     --cluster teehr-spark-cluster 
     --service-account-role-arn arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):role/AmazonEKS_EBS_CSI_DriverRole 
     --force
+```
+
+```
+kubectl apply -f autoscaler/cluster-autoscaler-autodiscover.yaml
+```
+```
+kubectl delete -f autoscaler/cluster-autoscaler-autodiscover.yaml
 ```

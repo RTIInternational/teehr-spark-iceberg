@@ -1,31 +1,31 @@
-apiVersion: projectcontour.io/v1
-kind: HTTPProxy
-metadata:
-  name: ${project.name}-proxy
-spec:
-  virtualhost:
-    fqdn: ${var.hostname}
-    ${if environment.name != "local"}
-    tls:
-      secretName: ${var.hostname}-tls
-    ${endif}
-  routes:
-    - services:
-      - name: spark-iceberg
-        port: 8888
-      conditions:
-        - prefix: /
-    - services:
-      - name: iceberg-rest
-        port: 8181
-      conditions:
-      - prefix: /iceberg
-      pathRewritePolicy:
-        replacePrefix:
-        - prefix: /iceberg
-          replacement: /
+# apiVersion: projectcontour.io/v1
+# kind: HTTPProxy
+# metadata:
+#   name: ${project.name}-proxy
+# spec:
+#   virtualhost:
+#     fqdn: ${var.hostname}
+#     ${if environment.name != "local"}
+#     tls:
+#       secretName: ${var.hostname}-tls
+#     ${endif}
+#   routes:
+#     - services:
+#       - name: spark-iceberg
+#         port: 8888
+#       conditions:
+#         - prefix: /
+#     - services:
+#       - name: iceberg-rest
+#         port: 8181
+#       conditions:
+#       - prefix: /iceberg
+#       pathRewritePolicy:
+#         replacePrefix:
+#         - prefix: /iceberg
+#           replacement: /
 
----
+# ---
 apiVersion: projectcontour.io/v1
 kind: HTTPProxy
 metadata:

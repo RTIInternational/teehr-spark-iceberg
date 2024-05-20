@@ -20,7 +20,7 @@ nodeGroups:
       withAddonPolicies:
         autoScaler: true
     labels:
-      d
+      dedicated: worker
     taints:
       dedicated: "worker:NoSchedule"
     propagateASGTags: true
@@ -39,14 +39,14 @@ iam:
       namespace: kube-system
     wellKnownPolicies:
       ebsCSIController: true
-  - metadata:
-      name: cluster-autoscaler
-      namespace: teehr-spark-default
-      labels: {aws-usage: "cluster-ops"}
-    wellKnownPolicies:
-      autoScaler: true
-    roleName: eksctl-cluster-autoscaler-role
-    roleOnly: true
+  # - metadata:
+  #     name: cluster-autoscaler
+  #     namespace: teehr-spark-default
+  #     labels: {aws-usage: "cluster-ops"}
+  #   wellKnownPolicies:
+  #     autoScaler: true
+  #   roleName: eksctl-cluster-autoscaler-role
+  #   roleOnly: true
 
 addons:
 - name: aws-ebs-csi-driver

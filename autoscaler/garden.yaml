@@ -7,6 +7,7 @@
 #     repo: autoscaler/cluster-autoscaler
 #   namespace: teehr-spark-default
 #   values:
-#     autoDiscovery.clusterName: teehr-spark-cluster
+#     autoDiscovery:
+#       clusterName: teehr-spark-cluster
 #     awsRegion: us-east-2
 # disabled: ${environment.name == "local"}
