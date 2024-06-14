@@ -1,6 +1,6 @@
-kind: Deploy
-description: K8s HTTPProxy
-name: httpproxy
-type: kubernetes
-spec:
-  files: ["./manifests/ingress.yaml"]
+# kind: Deploy
+# description: K8s HTTPProxy
+# name: httpproxy
+# type: kubernetes
+# spec:
+#   files: ["./manifests/ingress.yaml"]

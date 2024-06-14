@@ -1,11 +1,17 @@
-Create an EKS cluster with 2 node groups
+Login to an AWS account that you have sufficient privileges to create a K8s cluster.
+```
+aws configure
+```
+
+Create an EKS cluster with 2 node groups.
 ```
 cd eksctl
 eksctl create cluster -f cluster.yaml 
 cd ..
 ```
-Create the JSON config per https://docs.garden.io/kubernetes-plugins/guides/in-cluster-building#using-in-cluster-building-with-ecr
+We already have an ECR stood up we will use, but need to create a login to push images to container registry,
 
+Create the JSON config per https://docs.garden.io/kubernetes-plugins/guides/in-cluster-building#using-in-cluster-building-with-ecr
 ```
 cd eksctl
 kubectl --namespace default create secret generic ecr-config \
@@ -48,7 +54,7 @@ helm uninstall \
   --namespace cert-manager
 ```
 
-## Autoscaler
+## Autoscaler (needed, install with Garden!)
 ```
 helm upgrade \
   --cleanup-on-fail \
@@ -65,11 +71,12 @@ Only needs to be done once.
 Still have an issue with docker permissions for the service account.  
 `ecr-poweruser` does not seem to work, so setting manually in AWS console for now.
 
-Autoscaler policy needs to be added too...not sure why can't make this work.
-
 ```
 garden deploy --env remote
 ```
+
+Autoscaler policy needs to be added too...not sure why can't make this work.
+
 
 ```
 kubectl config current-context
@@ -85,8 +92,7 @@ kubectl -n teehr-spark-default port-forward service/minio 9001
 
 eksctl delete cluster --name teehr-spark-cluster --force --disable-nodegroup-eviction
 
-
-eksctl scale nodegroup --cluster=teehr-spark-cluster --nodes=1 --nodes-max=4 --nodes-max=4 worker-ng
+eksctl scale nodegroup --cluster=teehr-spark-cluster --nodes=0 --nodes-max=4 --nodes-min=0 worker-ng
 
 eksctl get nodegroup --cluster teehr-spark-cluster
 
@@ -121,3 +127,6 @@ kubectl apply -f autoscaler/cluster-autoscaler-autodiscover.yaml
 ```
 kubectl delete -f autoscaler/cluster-autoscaler-autodiscover.yaml
 ```
+cd eksctl
+eksctl create nodegroup -f cluster.yaml  --exclude=worker-ng-cpu
+cd ..

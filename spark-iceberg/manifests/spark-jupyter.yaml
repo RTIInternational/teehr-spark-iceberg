@@ -181,7 +181,7 @@ spec:
         imagePullPolicy: Always
         env:
         - name: TEEHR_WORKER_IMAGE
-          value: ${actions.build.spark-iceberg-image.outputs.deployment-image-id}
+          value: ${actions.build.spark-jupyter-image.outputs.deployment-image-id}
         - name: AWS_ACCESS_KEY_ID
           valueFrom:
             secretKeyRef:

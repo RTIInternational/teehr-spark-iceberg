@@ -13,17 +13,35 @@ nodeGroups:
     iam:
       withAddonPolicies:
         imageBuilder: true
+        autoScaler: true
   - name: worker-ng
     instanceType: r5.4xlarge
     desiredCapacity: 0
-    iam:
-      withAddonPolicies:
-        autoScaler: true
+    minSize: 0
+    maxSize: 4
     labels:
       dedicated: worker
     taints:
       dedicated: "worker:NoSchedule"
     propagateASGTags: true
+    iam:
+      withAddonPolicies:
+        imageBuilder: true
+        autoScaler: true
+  - name: worker-ng-cpu
+    instanceType: c7a.4xlarge
+    desiredCapacity: 0
+    minSize: 0
+    maxSize: 8
+    labels:
+      dedicated: worker-cpu
+    taints:
+      dedicated: "worker:NoSchedule"
+    propagateASGTags: true
+    iam:
+      withAddonPolicies:
+        imageBuilder: true
+        autoScaler: true
 
 iam:
   withOIDC: true

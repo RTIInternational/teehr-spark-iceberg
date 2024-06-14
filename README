@@ -1,1 +1,3 @@
 This repo contains files related to our testing for spark and iceberg for the TEEHR evaluation system.
+
+To work with Spark we created a Kubernetes cluster to run the Spark Executors and Drivers as well as host the Iceberg rest server and Minio bucket for these tests.  The steps taken to create the cluster are shown in `eksctl/README.md`.  The notebooks for the test are in `notebooks`.
